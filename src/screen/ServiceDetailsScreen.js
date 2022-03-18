@@ -216,13 +216,13 @@ return (
             width: 100,
             height: 100,
             }}
-            source={{uri: serviceSelected.serviceImg}}
+            source={{uri: serviceDetails.image}}
           />
         </View>
         <View style={{ flex: 1.3 }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{serviceSelected.serviceName}</Text>
+          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{serviceDetails.name}</Text>
           <Text style={{ fontSize: 14, fontWeight: 'normal' }}>Description: </Text>
-          <Text style={{ fontSize: 14, fontWeight: 'normal' }} numberOfLines={2}>{serviceSelected.serviceDescription}</Text>       
+          <Text style={{ fontSize: 14, fontWeight: 'normal' }} numberOfLines={2}>{serviceDetails.description}</Text>       
         </View>
       </View>
 
@@ -237,7 +237,7 @@ return (
             paddingVertical: 3,
             borderRadius: 5
         }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>RM{serviceSelected.servicePrice}</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>RM{serviceDetails.price}</Text>
         </View>
         </View>
       </View>
@@ -252,7 +252,7 @@ return (
             paddingVertical: 3,
             borderRadius: 5
         }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{serviceSelected.estimateHour} Hour</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{serviceDetails.estimateHour} Hour</Text>
         </View>
         </View>
       </View>

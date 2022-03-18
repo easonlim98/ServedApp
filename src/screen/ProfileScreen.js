@@ -21,11 +21,13 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CommonStore } from '../../store/CommonStore';
-
+import { getAuth, signOut } from 'firebase/auth';
 
 const ProfileScreen = props => {
 
 const { navigation, route } = props;
+
+const auth = getAuth();
 
 const userSelected = CommonStore.useState(s => s.userSelected);
 const firebaseUid = CommonStore.useState(s => s.firebaseUid);
@@ -68,9 +70,15 @@ navigation.setOptions({
     <TouchableOpacity style={{
     }} 
     onPress={() => {
-      CommonStore.update(s => {
-        s.isLoggedIn = false;
-        s.firebaseUid = '';
+      signOut(auth).then(() => {
+        CommonStore.update(s => {
+          s.isLoggedIn = false;
+          s.firebaseUid = '';
+        });
+        console.log('successfully signed out')
+      })
+      .catch((error) => {
+        console.log(error)
       });
       //firebase.auth().signOut()
     }}>
@@ -224,12 +232,12 @@ return (
         </View>
         <View style={{ width: '70%', paddingVertical: 0, paddingHorizontal: 20 }}>
           <View>
-            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{userSelected.name}</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{userProfile[0].name}</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Fontisto name={'wallet'} size={20} color={Colors.primaryColor}/>
-              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold' }}>RM {userSelected.walletAmount}</Text>
+              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold' }}>RM {userProfile[0].wallet}</Text>
             </View>
             <View style={{ alignItems: 'center' }}>
               <FontAwesome name={'plus-circle'} size={20} color={Colors.primaryColor} />

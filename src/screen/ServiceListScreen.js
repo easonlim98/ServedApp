@@ -39,7 +39,7 @@ navigation.setOptions({
 const serviceCategorySelected = CommonStore.useState(s => s.serviceCategorySelected);
 const serviceSelected = CommonStore.useState(s => s.serviceSelected);
 
-/* const [serviceList, setServiceList] = useState([
+const [serviceList, setServiceList] = useState([
   {
     uniqueId: 1,
     name: 'Phone Damage',
@@ -64,7 +64,7 @@ const serviceSelected = CommonStore.useState(s => s.serviceSelected);
     price: 79.00.toFixed(2),
     starCount: 4,
   },
-]); */
+]);
 
 const renderServiceList = ({item, index}) => {
   return(
@@ -188,7 +188,7 @@ return (
     </View>
     </View>
     <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {serviceCategorySelected.length}</Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {serviceList.length}</Text>
     </View>
 
     <View style={{ justifyContent: 'center', alignItems: 'center'}}>
@@ -197,7 +197,7 @@ return (
         renderItem={renderServiceList}
         keyExtractor={(item, index) => index.toString()}
       /> */}
-      {serviceCategorySelected.map((item, index) => {
+      {serviceList.map((item, index) => {
         return(
           <View style={{ 
             paddingHorizontal: 15, 
@@ -224,7 +224,7 @@ return (
                 CommonStore.update(s => {
                   s.serviceSelected = item;
                 })
-                navigation.navigate('ServiceDetails')
+                navigation.navigate('ServiceDetailsScreen')
             }}
           >
             <View style={{ flex: 2.5 }}>
@@ -236,16 +236,16 @@ return (
                       width: 80,
                       height: 80,
                     }}
-                    source={{uri: item.serviceImg}}
+                    source={{uri: item.image}}
                   />
                 </View>
                 <View style={{ flex: 2, paddingLeft: 10, paddingRight: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{item.serviceName}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{item.name}</Text>
                   </View>
                   <View style={{ flex: 3, paddingVertical: 5 }}>
                     <Text style={{ fontSize: 12, fontWeight: '600' }}>Description:</Text>
-                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.serviceDescription}</Text>
+                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.description}</Text>
                   </View>
                 </View>
               </View>
@@ -265,7 +265,7 @@ return (
                       width: '80%',
                       height: '80%',
                     }}>
-                      RM{item.servicePrice}
+                      RM{item.price}
                     </Text>
               </View>
             </View>
