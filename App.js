@@ -21,7 +21,6 @@ import SellerServiceScreen from './src/screen/SellerServiceScreen';
 import AddServiceScreen from './src/screen/AddServiceScreen';
 import CustomerOrderScreen from './src/screen/CustomerOrderScreen';
 
-import { Firestore, getFirestore } from 'firebase/firestore'
 import firebaseConfig from './constants/firebaseConfig';
 import { initializeApp } from 'firebase/app';
 import { onAuthStateChanged , getAuth } from 'firebase/auth';
@@ -83,12 +82,14 @@ function ProfileStack() {
   );
 }
 
-const auth = getAuth();
 
 export default function App() {
 
+  initializeApp(firebaseConfig);
+
+  const auth = getAuth();
+
   const isLoggedIn = CommonStore.useState(s => s.isLoggedIn);
-  initializeApp(firebaseConfig)
 
   onAuthStateChanged(auth, (user) => {
     if (user) {
