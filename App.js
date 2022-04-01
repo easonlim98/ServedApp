@@ -21,6 +21,11 @@ import SellerServiceScreen from './src/screen/SellerServiceScreen';
 import AddServiceScreen from './src/screen/AddServiceScreen';
 import CustomerOrderScreen from './src/screen/CustomerOrderScreen';
 
+
+import { collection, doc, getDoc, getDocs, onSnapshot, where } from "firebase/firestore";
+import { CollectionFunc } from './util/CommonFunc';
+
+import db from './constants/firebaseConfig';
 import firebaseConfig from './constants/firebaseConfig';
 import { initializeApp } from 'firebase/app';
 import { onAuthStateChanged , getAuth } from 'firebase/auth';
@@ -83,11 +88,30 @@ function ProfileStack() {
 }
 
 
+
 export default function App() {
 
-  initializeApp(firebaseConfig);
+  const userID = CommonStore.useState(s => s.userID);
+
+  useEffect(() => {
+    db;
+  },[]);
 
   const auth = getAuth();
+
+  /* const [userData, setUserData] = useState([]);
+
+  const getUsers = async () => {
+    const userRef = collection(db, 'user')
+    const userDoc = await getDocs(userRef)
+    setUserData(userDoc.docs.map((doc) => ({...doc.data()})))
+  };
+
+  useEffect(() => {
+
+    getUsers();
+
+  },[]); */
 
   const isLoggedIn = CommonStore.useState(s => s.isLoggedIn);
 

@@ -18,7 +18,9 @@ import {
 import Colors from "../constant/Colors";
 import { CommonStore } from '../../store/CommonStore';
 import { ServiceCategory } from '../../store/ServiceCategory';
-
+import { CollectionFunc } from '../../util/CommonFunc';
+import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc } from 'firebase/firestore'
+import db from '../../constants/firebaseConfig';
 
 const HomeScreen = props => {
 
@@ -26,11 +28,26 @@ const { navigation, route } = props;
 
 const userSelected = CommonStore.useState(s => s.userSelected);
 const serviceList = CommonStore.useState(s => s.serviceList);
+const userDetails = CommonStore.useState(s => s.userDetails);
+const userID = CommonStore.useState(s => s.userID);
 
+const [serviceData, setServiceData] = useState([]);
 
-useEffect(()=> {
-  console.log(userSelected)
-},[userSelected])
+const q = query(collection(db, "service"));
+const getService = onSnapshot(q, (querySnapshot) => {
+  const tempService = [];
+  querySnapshot.forEach((doc) => {
+    tempService.push(doc.data());
+  });
+  setServiceData(tempService);
+});
+
+useEffect(() => {
+
+  getService();
+
+},[]);
+
 
 const renderCategoryList = ({item, index}) => {
   return(
@@ -41,16 +58,16 @@ const renderCategoryList = ({item, index}) => {
         height: 85,
       }}
       onPress={() => {
-        /* var tempServiceSelected = [];
-          for(var x = 0; x < serviceList.length; x++){
-            if(item.id === serviceList[x].serviceCategory){
-              const record = serviceList[x];
+        var tempServiceSelected = [];
+          for(var x = 0; x < serviceData.length; x++){
+            if(item.id === serviceData[x].serviceCategory){
+              const record = serviceData[x];
               tempServiceSelected.push(record)
             }
           }
           CommonStore.update(s => {
             s.serviceCategorySelected = tempServiceSelected;
-          }); */
+          });
           navigation.navigate('ServiceListScreen')
       }}>
       <Image
@@ -77,7 +94,7 @@ return (
     />
     </View>
     <View style={{ justifyContent: 'center' }}>
-    <Text style={{ fontSize: 24, fontWeight: '900', color: Colors.black, paddingVertical: 5, }}>Hi {userSelected.name}</Text>
+    <Text style={{ fontSize: 24, fontWeight: '900', color: Colors.black, paddingVertical: 5, }}>Hi {userSelected.userName}</Text>
     <Text style={{ width: '80%', fontSize: 18, fontWeight: '700', color: Colors.black }}>What service are you looking for?</Text>
     </View>
     </View>

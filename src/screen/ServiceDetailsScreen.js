@@ -21,8 +21,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons'
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import { CommonStore } from '../../store/CommonStore'
-import { createOrder } from '../../firebase-API/OrderAPI'
-import { CollectionFunc } from '../../util/CommonFunc';
+import { v4 as uuidv4 } from 'uuid'
+import { collection, addDoc, getDocs, Timestamp, setDoc, doc } from 'firebase/firestore'
+import db from '../../constants/firebaseConfig';
 
 const ServiceDetailsScreen = props => {
 
@@ -63,45 +64,47 @@ const [serviceDetails, setServiceDetails] = useState(
 );
 
 const createUrgentOrder = async () => {
-    var orderDetail = {
+    var body = {
+      uniqueID: uuidv4(),
       createdAt: Date.now(),
       orderType: 'URGENT',
-      serviceID: serviceSelected.id,
-      customerID: userSelected.id,
+      serviceID: serviceSelected.uniqueID,
+      customerID: userSelected.uniqueID,
       status: 'pending',
       totalPrice: serviceSelected.servicePrice,
       estimateHour: serviceSelected.estimateHour,
       serviceImg: serviceSelected.serviceImg,
       serviceDescription: serviceSelected.serviceDescription,
-      serviceName: serviceSelected.serviceName
+      serviceName: serviceSelected.serviceName,
+      sellerID: serviceSelected.sellerID
     }
-    await createOrder(orderDetail)
-    console.log(orderDetail)
+    await setDoc(doc(db, 'order', body.uniqueID), body);
+    console.log(body)
     Alert.alert('Successfully Ordered')
       setShowConfirmationUrg(false);
-      navigation.navigate('Main');
-      CollectionFunc();
+      navigation.navigate('HomeScreen');
 }
 
 const createScheduleOrder = async () => {
-  var orderDetail = {
+  var body = {
+    uniqueID: uuidv4(),
     createdAt: Date.now(),
     orderType: 'SCHEDULE',
-    serviceID: serviceSelected.id,
-    customerID: userSelected.id,
+    serviceID: serviceSelected.uniqueID,
+    customerID: userSelected.uniqueID,
     status: 'pending',
     totalPrice: serviceSelected.servicePrice,
     estimateHour: serviceSelected.estimateHour,
     serviceImg: serviceSelected.serviceImg,
     serviceDescription: serviceSelected.serviceDescription,
-    serviceName: serviceSelected.serviceName
+    serviceName: serviceSelected.serviceName,
+    sellerID: serviceSelected.sellerID
   }
-  await createOrder(orderDetail)
-  console.log(orderDetail)
+  await setDoc(doc(db, 'order', body.uniqueID), body);
+  console.log(body)
   Alert.alert('Successfully Ordered')
     setShowConfirmationSch(false);
-    navigation.navigate('Main');
-    CollectionFunc();
+    navigation.navigate('HomeScreen');
 }
 
 return (
@@ -203,11 +206,6 @@ return (
     </Modal>
     <View style={{ paddingHorizontal: 30, paddingVertical: 20 }}>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <AntDesign name={'star'} size={33} color={Colors.primaryColor}/>
-        <AntDesign name={'message1'} size={25} color={Colors.black}/>
-      </View>
-
       <View style={{ flexDirection: 'row', paddingVertical: 15 }}>
         <View style={{ flex: 0.8 }}>
           <Image
@@ -216,13 +214,13 @@ return (
             width: 100,
             height: 100,
             }}
-            source={{uri: serviceDetails.image}}
+            source={{uri: serviceSelected.serviceImg}}
           />
         </View>
         <View style={{ flex: 1.3 }}>
-          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{serviceDetails.name}</Text>
+          <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{serviceSelected.serviceName}</Text>
           <Text style={{ fontSize: 14, fontWeight: 'normal' }}>Description: </Text>
-          <Text style={{ fontSize: 14, fontWeight: 'normal' }} numberOfLines={2}>{serviceDetails.description}</Text>       
+          <Text style={{ fontSize: 14, fontWeight: 'normal' }} numberOfLines={2}>{serviceSelected.serviceDescription}</Text>       
         </View>
       </View>
 
@@ -237,7 +235,7 @@ return (
             paddingVertical: 3,
             borderRadius: 5
         }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>RM{serviceDetails.price}</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>RM{serviceSelected.servicePrice}</Text>
         </View>
         </View>
       </View>
@@ -252,7 +250,7 @@ return (
             paddingVertical: 3,
             borderRadius: 5
         }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{serviceDetails.estimateHour} Hour</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{serviceSelected.estimateHour} Hour</Text>
         </View>
         </View>
       </View>

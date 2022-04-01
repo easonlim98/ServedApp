@@ -4,6 +4,8 @@ import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView 
 import Feather from 'react-native-vector-icons/Feather';
 import { CommonStore } from '../../store/CommonStore';
 import { AuthCredential, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc, doc } from 'firebase/firestore'
+import db from '../../constants/firebaseConfig';
 
 const LoginScreen = props => {
 
@@ -17,50 +19,125 @@ const LoginScreen = props => {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regRepeatPassword, setRegRepeatPassword] = useState('');
-  const [userTypeCustomer, setUserTypeCustomer] = useState('CUSTOMER');
-  const [userTypeSeller, setUserTypeSeller] = useState('SELLER');
-
+  const userTypeCustomer = 'CUSTOMER';
+  const userTypeSeller = 'SELLER';
+  const userID = CommonStore.useState(s => s.userID);
+  const userDetails = CommonStore.useState(s => s.userDetails);
   const [registrationScreen, setRegistrationScreen] = useState(false);
 
   const auth = getAuth();
 
+  const [userData, setUserData] = useState([]);
+
+  const q = query(collection(db, "user"));
+  const getUsers = onSnapshot(q, (querySnapshot) => {
+    const tempUser = [];
+    querySnapshot.forEach((doc) => {
+      tempUser.push(doc.data());
+    });
+    setUserData(tempUser);
+  });
+
+  useEffect(() => {
+
+    getUsers();
+
+  },[]);
+
+  useEffect(() => {
+    CommonStore.update(s => { s.userDetails = userData })
+  },[userData]);
+
   const loginFunc = () => {
 
-    let credential = signInWithEmailAndPassword(auth, userEmail, userPassword)
-        .then(() => {
-          console.log('success')
+    signInWithEmailAndPassword(auth, userEmail, userPassword)
+        .then((userCredential) => {
+          console.log(userCredential)
+          CommonStore.update(s => {
+            s.userID = userCredential.user.uid;
+         });
+         var tempUserSelected = {};
+         for (var i = 0; i < userData.length; i++){
+           if(userData[i].uniqueID === userCredential.user.uid){
+             tempUserSelected = userData[i];
+             CommonStore.update(s => {
+              s.userSelected = tempUserSelected;
+            })
+           }
+         }
         })
         .catch((error) => {
             alert(error.message)
         });
   };
 
-  const registerFuncCustomer = () => {
+  const registerFuncCustomer = async () => {
 
     if (regPassword == regRepeatPassword) {
-      let credential = createUserWithEmailAndPassword(auth, regEmail, regPassword)
-        .then((userCredential) => {
-         console.log(userCredential) 
+      await createUserWithEmailAndPassword(auth, regEmail, regPassword)
+        .then( async (userCredential) => {
+          try {
+            var body = {
+              uniqueID: userCredential.user.uid,
+              userImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/640px-User_icon_2.svg.png',
+              userName: regFullName,
+              userEmail: regEmail,
+              userType: userTypeCustomer,
+              walletAmount: 0,
+              createdAt: Date.now(),
+              isActive: true,
+            }
+            await setDoc(doc(db, 'user', userCredential.user.uid), body)
+            console.log('added to database')
+            CommonStore.update(s => {
+              s.userID = userCredential.user.uid;
+              s.userSelected = body;
+           });
+         } catch (error) {
+           alert(error)
+         }
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(errorCode);
+          console.log(errorMessage);
+        })
+      }
+      
+    }
+
+  const registerFuncSeller = async () => {
+
+    if (regPassword == regRepeatPassword) {
+      await createUserWithEmailAndPassword(auth, regEmail, regPassword)
+        .then( async (userCredential) => {
+          try {
+            var body = {
+              uniqueID: userCredential.user.uid,
+              userImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/640px-User_icon_2.svg.png',
+              userName: regFullName,
+              userEmail: regEmail,
+              userType: userTypeSeller,
+              walletAmount: 0,
+              createdAt: Date.now(),
+              isActive: true,
+            }
+            await setDoc(doc(db, 'user', userCredential.user.uid), body)
+            console.log('added to database')
+            CommonStore.update(s => {
+              s.userID = userCredential.user.uid;
+              s.userSelected = body;
+           });
+         } catch (error) {
+           alert(error)
+         }
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
         })
-  }
-  }
-
-  const registerFuncSeller = () => {
-
-    if (regPassword == regRepeatPassword) {
-      let credential = createUserWithEmailAndPassword(auth, regEmail, regPassword)
-        .then((userCredential) => {
-         console.log(userCredential) 
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-        })
-  }
+      }
   }
 
 

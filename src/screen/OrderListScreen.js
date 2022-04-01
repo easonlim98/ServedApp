@@ -19,8 +19,8 @@ import Colors from "../constant/Colors";
 import Feather from 'react-native-vector-icons/Feather';
 import { CommonStore } from '../../store/CommonStore';
 import moment from 'moment';
-import { CollectionFunc } from '../../util/CommonFunc';
-
+import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc } from 'firebase/firestore'
+import db from '../../constants/firebaseConfig';
 
 const OrderListScreen = (props) => {
 
@@ -62,61 +62,44 @@ navigation.setOptions({
   ),
 });
 
-const [currCustomerOrder, setCurrCustomerOrder] = useState([]);
+const [serviceData, setServiceData] = useState([]);
 
+const q = query(collection(db, "order"));
+const getOrder = onSnapshot(q, (querySnapshot) => {
+  const tempOrder = [];
+  querySnapshot.forEach((doc) => {
+    tempOrder.push(doc.data());
+  });
+  setCustomerOrder(tempOrder);
+});
+
+useEffect(() => {
+
+  getOrder();
+
+},[]);
+
+const [customerOrder, setCustomerOrder] = useState([]);
 
 useEffect(()=> {
   
   var tempCustomerOrder = [];
 
   for(var x = 0; x < customerOrder.length; x++){
-    if(firebaseUid === customerOrder[x].customerID){
+    if(userSelected.uniqueID === customerOrder[x].customerID){
       const orders = customerOrder[x]
       tempCustomerOrder.push(orders);
     }
   }
 
   setCurrCustomerOrder(tempCustomerOrder);
-  console.log(tempCustomerOrder)
   
-},[customerOrder, userSelected, firebaseUid])
+},[customerOrder, userSelected]);
 
-const firebaseUid = CommonStore.useState(s => s.firebaseUid);
+const [currCustomerOrder, setCurrCustomerOrder] = useState([]);
+
 const userSelected = CommonStore.useState(s => s.userSelected);
-const serviceList = CommonStore.useState(s => s.serviceList);
-const customerOrder = CommonStore.useState(s => s.customerOrder);
-const selectedCustomerOrder = CommonStore.useState(s => s.selectedCustomerOrder);
 
-//Dummy data
-const [orderList, setOrderList] = useState([
-  {
-    name: 'Phone Damage',
-    image: 'https://blog.malwarebytes.com/wp-content/uploads/2015/05/photodune-9089398-mobile-devices-s-900x506.jpg',
-    description: 'Scratched Sofa skin and bone break, required fixes',
-    price: 50.00.toFixed(2),
-    starCount: 3,
-    orderAt: '12/11/2021 03:24PM',
-    status: 'completed'
-  }, 
-  {
-    name: 'Scratch Screen',
-    image: 'https://blueflag.com.au/static/3642cc73b5c4a9ceb5fa176c5f5506af/4dad2/vehicle-make.jpg',
-    description: 'Table painting with free design options with this seller.',
-    price: 150.00.toFixed(2),
-    starCount: 5,
-    orderAt: '12/11/2021 03:24PM',
-    status: 'pending'
-  },
-  {
-    name: 'All Kind Repair',
-    image: 'https://www.crossthet.com.au/wp-content/uploads/2021/06/construction-crane-surveyor-1.jpg',
-    description: 'Load heavy bed',
-    price: 79.00.toFixed(2),
-    starCount: 4,
-    orderAt: '12/11/2021 03:24PM',
-    status: 'in-progress'
-  },
-]);
 
 const renderServiceList = ({ item, index }) => {
 
@@ -151,12 +134,12 @@ const renderServiceList = ({ item, index }) => {
                 width: 80,
                 height: 80,
               }}
-              source={{uri: item.image}}
+              source={{uri: item.serviceImg}}
             />
           </View>
           <View style={{ flex: 2, paddingLeft: 10, paddingRight: 10 }}>
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', width: '70%' }} numberOfLines={1}>{item.name}</Text>
+              <Text style={{ fontSize: 14, fontWeight: 'bold', width: '70%' }} numberOfLines={1}>{item.serviceName}</Text>
               <View style={{ paddingVertical: 0, width: '40%' }}>
               <Text style={{
                 backgroundColor: 
@@ -167,7 +150,7 @@ const renderServiceList = ({ item, index }) => {
                 paddingVertical: 2,
                 borderRadius: 10,
                 textAlign: 'center',
-                fontSize: 8,
+                fontSize: 10,
                 color: Colors.white
               }}>
                 {item.status}
@@ -176,7 +159,7 @@ const renderServiceList = ({ item, index }) => {
             </View>
             <View style={{ flex: 3, paddingTop: 5 }}>
               <Text style={{ fontSize: 12, fontWeight: '600' }}>Description:</Text>
-              <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.description}</Text>
+              <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.serviceDescription}</Text>
             </View>
           </View>
         </View>
@@ -241,11 +224,11 @@ return (
     </View>
     </View>
     <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: 3</Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {currCustomerOrder.length}</Text>
     </View>
 
       <FlatList
-        data={orderList}
+        data={currCustomerOrder}
         nestedScrollEnabled={true}
         renderItem={renderServiceList}
         keyExtractor={(item, index) => index.toString()}

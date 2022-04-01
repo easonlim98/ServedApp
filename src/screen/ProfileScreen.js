@@ -22,6 +22,8 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CommonStore } from '../../store/CommonStore';
 import { getAuth, signOut } from 'firebase/auth';
+import { collection, addDoc, getDocs, Timestamp, setDoc, updateDoc, doc, query, onSnapshot, increment } from 'firebase/firestore';
+import db from '../../constants/firebaseConfig';
 
 const ProfileScreen = props => {
 
@@ -98,6 +100,40 @@ navigation.setOptions({
   ),
 });
 
+const q = query(collection(db, "user"));
+const getUser = onSnapshot(q, (querySnapshot) => {
+  const tempUser = [];
+  querySnapshot.forEach((doc) => {
+    tempUser.push(doc.data());
+  });
+  setTempUser(tempUser);
+});
+
+useEffect(() => {
+
+  getUser();
+
+},[]);
+
+const [tempUser, setTempUser] = useState([]);
+
+useEffect(()=> {
+  
+  var tempUserSelected = [];
+
+  for(var x = 0; x < tempUser.length; x++){
+    if(userSelected.uniqueID === tempUser[x].uniqueID){
+      const orders = tempUser[x]
+      tempUserSelected.push(orders);
+    }
+  }
+
+  setCurrProfile(tempUserSelected);
+  
+},[tempUser, userSelected]);
+
+const [currProfile, setCurrProfile] = useState([]);
+
 useEffect(() => {
 
   var tempTransaction = [];
@@ -112,6 +148,20 @@ useEffect(() => {
 }, [transactionList, userProfile]);
 
 const [userTransactions, setUserTransactions] = useState([]);
+
+const [showAddWallet, setShowAddWallet] = useState(false);
+const [reloadAmount, setReloadAmount] = useState(0);
+
+const addWalletAmount = async () => {
+  const userRef = doc(db, 'user', userSelected.uniqueID);
+  await updateDoc(userRef, {
+    walletAmount: increment(50)
+  })
+
+    setShowAddWallet(false);
+    navigation.navigate('ProfileScreen')
+
+}
 
 const [userProfile, setUserProfile] = useState([
   {
@@ -218,6 +268,59 @@ const renderTransaction = ({ item, index }) => {
 return (
 
   <ScrollView style={[styles.container]}>
+
+  <Modal
+      visible={showAddWallet}
+      transparent={true}
+      animationType={'slide'}
+    >
+      <View style={[styles.ModalContainer]}>
+        <View style={[styles.modalView]}>
+          <View>
+          <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.white }}>Enter Reload Amount</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 10, }}>
+              <TextInput 
+                style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}
+                placeholder="enter amount"
+                value={reloadAmount}
+                onChangeText={text => setReloadAmount(text)}
+                />
+          </View>
+          <View style={{ flexDirection: 'row', width: '75%',justifyContent: 'space-between', paddingTop: 20 }}>
+            <TouchableOpacity style={{ 
+              width: 80,
+              height: 35,
+              backgroundColor: Colors.primaryColor,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 12,
+             }}
+              onPress={() => {
+                addWalletAmount();
+              }}
+             >
+               <Text style={{ fontSize: 14, color: Colors.black, fontWeight: 'bold' }}>CONFIRM</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={{ 
+              width: 80,
+              height: 35,
+              backgroundColor: Colors.white,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 12,
+             }}
+              onPress={() => {
+                setShowAddWallet(false);
+              }}
+             >
+               <Text style={{ fontSize: 14, color: Colors.black, fontWeight: 'bold' }}>CANCEL</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+
     <View style={{ paddingBottom: 20 }}>
       <View style={{ flexDirection: 'row', paddingVertical: 30, width: '80%', alignSelf: 'center' }}>
         <View style={{ width: '30%', justifyContent: 'center', alignItems: 'center' }}>
@@ -227,21 +330,21 @@ return (
               width: 80,
               height: 80,
             }}
-            source={{ uri: userProfile[0].image }}
+            source={currProfile.length !== 0 ? { uri: currProfile[0].userImage } : null}
           />
         </View>
         <View style={{ width: '70%', paddingVertical: 0, paddingHorizontal: 20 }}>
           <View>
-            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{userProfile[0].name}</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{currProfile.length !== 0 ? currProfile[0].userName : 'null'}</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Fontisto name={'wallet'} size={20} color={Colors.primaryColor}/>
-              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold' }}>RM {userProfile[0].wallet}</Text>
+              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold' }}>RM {currProfile.length !== 0 ? currProfile[0].walletAmount: '0'}</Text>
             </View>
-            <View style={{ alignItems: 'center' }}>
+            <TouchableOpacity style={{ alignItems: 'center' }} onPress={() => { setShowAddWallet(true); }}>
               <FontAwesome name={'plus-circle'} size={20} color={Colors.primaryColor} />
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
     </View>
@@ -279,11 +382,13 @@ return (
     />
     </View>
     </View>
+    { userSelected.userType === "SELLER" ?
+    <>
     <View style={{ alignItems: 'center' }}>
         <TouchableOpacity
           style={[styles.SellerButton]}
           onPress={() => {
-            navigation.navigate('SellerService')
+            navigation.navigate('SellerServiceScreen')
           }}
         >
           <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.black }}>My Service</Text>
@@ -293,12 +398,16 @@ return (
         <TouchableOpacity
           style={[styles.SellerButton]}
           onPress={() => {
-            navigation.navigate('CustomerOrder')
+            navigation.navigate('CustomerOrderScreen')
           }}
         >
           <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.black }}>Customer's Order</Text>
         </TouchableOpacity>
     </View>
+    </>
+    :
+    null
+    }
   </ScrollView>
 
 );
@@ -307,8 +416,22 @@ return (
 
 const styles = StyleSheet.create({
   container: {
-    //flex: 1,
+    flex: 1,
     backgroundColor: Colors.white,
+  },
+  ModalContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalView: {
+    height: 150,
+    width: 250,
+    backgroundColor: Colors.grey,
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    alignItems: 'center'
   },
   homeLogo: {
     width: 220,

@@ -188,7 +188,7 @@ return (
     </View>
     </View>
     <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {serviceList.length}</Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {serviceCategorySelected.length}</Text>
     </View>
 
     <View style={{ justifyContent: 'center', alignItems: 'center'}}>
@@ -197,7 +197,7 @@ return (
         renderItem={renderServiceList}
         keyExtractor={(item, index) => index.toString()}
       /> */}
-      {serviceList.map((item, index) => {
+      {serviceCategorySelected.map((item, index) => {
         return(
           <View style={{ 
             paddingHorizontal: 15, 
@@ -236,16 +236,16 @@ return (
                       width: 80,
                       height: 80,
                     }}
-                    source={{uri: item.image}}
+                    source={{uri: item.serviceImg}}
                   />
                 </View>
                 <View style={{ flex: 2, paddingLeft: 10, paddingRight: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{item.name}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{item.serviceName}</Text>
                   </View>
                   <View style={{ flex: 3, paddingVertical: 5 }}>
                     <Text style={{ fontSize: 12, fontWeight: '600' }}>Description:</Text>
-                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.description}</Text>
+                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.serviceDescription}</Text>
                   </View>
                 </View>
               </View>
@@ -253,7 +253,6 @@ return (
       
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
-                <AntDesign name={'star'} size={30} color={Colors.primaryColor}/>
               </View>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ 
@@ -265,7 +264,7 @@ return (
                       width: '80%',
                       height: '80%',
                     }}>
-                      RM{item.price}
+                      RM{item.servicePrice}
                     </Text>
               </View>
             </View>
