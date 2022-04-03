@@ -15,4 +15,8 @@ export const CommonStore = new Store({
     customerOrder: [],
     selectedCustomerOrder: [],
 
+    transactionList: [],
+    
+    chatList: [],
+
 });

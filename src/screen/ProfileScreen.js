@@ -24,6 +24,9 @@ import { CommonStore } from '../../store/CommonStore';
 import { getAuth, signOut } from 'firebase/auth';
 import { collection, addDoc, getDocs, Timestamp, setDoc, updateDoc, doc, query, onSnapshot, increment } from 'firebase/firestore';
 import db from '../../constants/firebaseConfig';
+import { CollectionFunc } from '../../util/CommonFunc';
+import Foundation from 'react-native-vector-icons/Foundation'
+import moment from 'moment';
 
 const ProfileScreen = props => {
 
@@ -31,9 +34,13 @@ const { navigation, route } = props;
 
 const auth = getAuth();
 
-const userSelected = CommonStore.useState(s => s.userSelected);
-const firebaseUid = CommonStore.useState(s => s.firebaseUid);
+useEffect(() => {
+  if(props){
+    CollectionFunc(userID);
+  }
+})
 
+useEffect(() => { 
 navigation.setOptions({
   headerLeft: () => (
     <TouchableOpacity style={{
@@ -100,52 +107,73 @@ navigation.setOptions({
   ),
 });
 
-const q = query(collection(db, "user"));
-const getUser = onSnapshot(q, (querySnapshot) => {
-  const tempUser = [];
-  querySnapshot.forEach((doc) => {
-    tempUser.push(doc.data());
-  });
-  setTempUser(tempUser);
 });
 
 useEffect(() => {
 
-  getUser();
+  var selected = [];
 
-},[]);
+  for(var x = 0; x < userDetails.length; x++){
+    if(userDetails[x].uniqueID === userID){
+      const record = userDetails[x];
+      selected.push(record)
 
-const [tempUser, setTempUser] = useState([]);
-
-useEffect(()=> {
-  
-  var tempUserSelected = [];
-
-  for(var x = 0; x < tempUser.length; x++){
-    if(userSelected.uniqueID === tempUser[x].uniqueID){
-      const orders = tempUser[x]
-      tempUserSelected.push(orders);
     }
   }
 
-  setCurrProfile(tempUserSelected);
-  
-},[tempUser, userSelected]);
+  setCurrProfile(selected);
+
+},[userDetails, userID])
+
+const reload = () => {
+
+  var selected = [];
+
+  for(var x = 0; x < userDetails.length; x++){
+    if(userDetails[x].uniqueID === userID){
+      const record = userDetails[x];
+      selected.push(record)
+
+    }
+  }
+
+  setCurrProfile(selected);
+
+  var tempTransaction = [];
+
+  for (var i = 0; i < transactionList.length; i++){
+    if(transactionList[i].userID === userID){
+      const record = transactionList[i]
+      tempTransaction.push(record)
+    }
+  }
+
+  console.log(tempTransaction)
+
+  setUserTransactions(tempTransaction);
+
+}
 
 const [currProfile, setCurrProfile] = useState([]);
+
+const userID = CommonStore.useState(s => s.userID);
+const userDetails = CommonStore.useState(s => s.userDetails);
+const transactionList = CommonStore.useState(s => s.transactionList);
 
 useEffect(() => {
 
   var tempTransaction = [];
 
   for (var i = 0; i < transactionList.length; i++){
-    if(transactionList[i].customerId === userProfile[0].customerId){
-      tempTransaction.push(transactionList[i])
-      setUserTransactions(tempTransaction);
+    if(transactionList[i].userID === userID){
+      const record = transactionList[i]
+      tempTransaction.push(record)
     }
   }
 
-}, [transactionList, userProfile]);
+  setUserTransactions(tempTransaction);
+
+}, [transactionList, userID]);
 
 const [userTransactions, setUserTransactions] = useState([]);
 
@@ -153,91 +181,43 @@ const [showAddWallet, setShowAddWallet] = useState(false);
 const [reloadAmount, setReloadAmount] = useState(0);
 
 const addWalletAmount = async () => {
-  const userRef = doc(db, 'user', userSelected.uniqueID);
+
+  var tempUser = [];
+
+  for(var i = 0; i < userDetails.length; i++){
+    if(userDetails[i].uniqueID === userID){
+      const record = userDetails[i]
+      tempUser.push(record)
+    }
+  }
+
+  const userRef = doc(db, 'user', tempUser[0].docID);
   await updateDoc(userRef, {
-    walletAmount: increment(50)
+    walletAmount: increment(reloadAmount)
   })
 
     setShowAddWallet(false);
-    navigation.navigate('ProfileScreen')
 
-}
+  var body = {
+    amount: reloadAmount,
+    userID: userID,
+    serviceName: 'undefined',
+    createdAt: Date.now()
+  }
 
-const [userProfile, setUserProfile] = useState([
-  {
-    customerId: 'EL1',
-    name: 'Eason Lim',
-    type: 'CUSTOMER',
-    image: 'https://cdn.vox-cdn.com/thumbor/sPIVB-yrRQEpikY57IUZ9qcuJsU=/1400x1050/filters:format(jpeg)/cdn.vox-cdn.com/uploads/chorus_asset/file/22266379/shin_ultraman.jpg',
-    wallet: 80.00.toFixed(2),
-  },
-]);
+  await addDoc(collection(db, 'transaction'), body);
+  console.log(body)
 
-const [transactionList, setTransactionList] = useState([
-  {
-    amount: 100.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: 'Aircon Service',
-    createdAt: '13/12/2021 01:22PM'
-  },
-  {
-    amount: 200.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '13/12/2021 01:22PM'
-  },
-  {
-    amount: 200.00.toFixed(2),
-    customerId: 'EL2',
-    serviceName: 'Aircon Service',
-    createdAt: '13/12/2021 01:22PM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-  {
-    amount: 250.00.toFixed(2),
-    customerId: 'EL1',
-    serviceName: undefined,
-    createdAt: '15/12/2021 09:22AM'
-  },
-]);
+};
 
 const renderTransaction = ({ item, index }) => {
   return(
     <View style={{ flexDirection: 'row', paddingBottom: 15 }}>
       <View style={{ }}>
         <FontAwesome 
-          name={item.serviceName === undefined ? 'plus-circle' : 'minus-circle'} 
+          name={item.serviceName === 'undefined' ? 'plus-circle' : 'minus-circle'} 
           size={20}
-          color={item.serviceName === undefined ? Colors.primaryColor : '#003BD1'}
+          color={item.serviceName === 'undefined' ? Colors.primaryColor : '#003BD1'}
         />
       </View>
       <View style={{ paddingLeft: 20 }}>
@@ -245,12 +225,12 @@ const renderTransaction = ({ item, index }) => {
           <Text style={{ 
             fontSize: 14, 
             fontWeight: 'bold',
-            color: item.serviceName === undefined ? Colors.primaryColor : '#003BD1'
+            color: item.serviceName === 'undefined' ? Colors.primaryColor : '#003BD1'
             }}>
               RM {item.amount}
           </Text>
         </View>
-        { item.serviceName === undefined ?
+        { item.serviceName === 'undefined' ?
         <></>
         :
         <View style={{  }}>
@@ -258,7 +238,7 @@ const renderTransaction = ({ item, index }) => {
         </View>
         }
         <View style={{  }}>
-          <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{item.createdAt}</Text>
+          <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{moment(item.createdAt).format('DD-MM-YYYY HH:MM')}</Text>
         </View>
       </View>
     </View>
@@ -282,7 +262,8 @@ return (
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 10, }}>
               <TextInput 
                 style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}
-                placeholder="enter amount"
+                placeholderTextColor="#FFFFFF"
+                placeholder={"0"}
                 value={reloadAmount}
                 onChangeText={text => setReloadAmount(text)}
                 />
@@ -334,8 +315,11 @@ return (
           />
         </View>
         <View style={{ width: '70%', paddingVertical: 0, paddingHorizontal: 20 }}>
-          <View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{currProfile.length !== 0 ? currProfile[0].userName : 'null'}</Text>
+            <TouchableOpacity onPress={() => { reload(); }}>
+              <Foundation name='refresh' size={30} color={Colors.primaryColor} />
+            </TouchableOpacity>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -382,7 +366,7 @@ return (
     />
     </View>
     </View>
-    { userSelected.userType === "SELLER" ?
+    { currProfile.length > 0 && currProfile[0].userType === "SELLER" ?
     <>
     <View style={{ alignItems: 'center' }}>
         <TouchableOpacity

@@ -19,22 +19,28 @@ import { CommonStore } from '../../store/CommonStore'
 const ServiceListScreen = props => {
 
 const { navigation, route } = props;
-navigation.setOptions({
-  headerTitle: () => (
-    <View style={{
-      justifyContent: 'center',
-    }}>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: Colors.black,
-        }}>
-        Services
-      </Text>
-    </View>
-  ),
-});
+
+useEffect(() => {
+
+  navigation.setOptions({
+    headerTitle: () => (
+      <View style={{
+        justifyContent: 'center',
+      }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: Colors.black,
+          }}>
+          Services
+        </Text>
+      </View>
+    ),
+  });
+
+}) 
+
 
 const serviceCategorySelected = CommonStore.useState(s => s.serviceCategorySelected);
 const serviceSelected = CommonStore.useState(s => s.serviceSelected);
@@ -144,7 +150,7 @@ const renderServiceList = ({item, index}) => {
 return (
 
   <ScrollView style={[styles.container]}>
-    <View style={{ paddingVertical: 20 }}>
+    {/* <View style={{ paddingVertical: 20 }}>
     <View
         style={{
             width: 300,
@@ -186,8 +192,8 @@ return (
             //value={}
         />
     </View>
-    </View>
-    <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
+    </View> */}
+    <View style={{ paddingHorizontal: 40, paddingVertical: 5, marginTop: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {serviceCategorySelected.length}</Text>
     </View>
 
@@ -252,7 +258,8 @@ return (
             </View>
       
             <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, backgroundColor: Colors.secondaryColor, alignItems: 'center', borderRadius: 5 }}>
+                <Text style={{ padding: 2, fontWeight: 'bold' }} numberOfLines={1}>{item.sellerName}</Text>
               </View>
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ 
