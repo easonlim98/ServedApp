@@ -62,7 +62,7 @@ navigation.setOptions({
   ),
 });
 
-const createServiceFunc = async () => {
+const createServiceFunc = () => {
 
       var body = {
           uniqueID: uuidv4(),
@@ -77,7 +77,7 @@ const createServiceFunc = async () => {
           serviceCategory: category,
       }
 
-     await setDoc(doc(db, 'service', body.uniqueID), body).then(() => {
+     setDoc(doc(db, 'service', body.uniqueID), body).then(() => {
         navigation.navigate('SellerServiceScreen');
         
         console.log(body)
