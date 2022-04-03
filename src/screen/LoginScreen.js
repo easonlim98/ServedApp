@@ -3,9 +3,10 @@ import Colors from '../constant/Colors';
 import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from 'react-native';
 import Feather from 'react-native-vector-icons/Feather';
 import { CommonStore } from '../../store/CommonStore';
-import { AuthCredential, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { AuthCredential, setPersistence, createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc, doc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
+import { CollectionFunc } from '../../util/CommonFunc';
 
 const LoginScreen = props => {
 
@@ -27,26 +28,11 @@ const LoginScreen = props => {
 
   const auth = getAuth();
 
-  const [userData, setUserData] = useState([]);
-
-  const q = query(collection(db, "user"));
-  const getUsers = onSnapshot(q, (querySnapshot) => {
-    const tempUser = [];
-    querySnapshot.forEach((doc) => {
-      tempUser.push(doc.data());
-    });
-    setUserData(tempUser);
+  useEffect(() => {
+    CollectionFunc(tempUserID);
   });
 
-  useEffect(() => {
-
-    getUsers();
-
-  },[]);
-
-  useEffect(() => {
-    CommonStore.update(s => { s.userDetails = userData })
-  },[userData]);
+  const [tempUserID, setTempUserID] = useState('');
 
   const loginFunc = () => {
 
@@ -55,8 +41,9 @@ const LoginScreen = props => {
           console.log(userCredential)
           CommonStore.update(s => {
             s.userID = userCredential.user.uid;
-         });
-         var tempUserSelected = {};
+          });
+          setTempUserID(userCredential.user.uid)
+         /* var tempUserSelected = {};
          for (var i = 0; i < userData.length; i++){
            if(userData[i].uniqueID === userCredential.user.uid){
              tempUserSelected = userData[i];
@@ -64,11 +51,12 @@ const LoginScreen = props => {
               s.userSelected = tempUserSelected;
             })
            }
-         }
+         } */
         })
         .catch((error) => {
             alert(error.message)
         });
+
   };
 
   const registerFuncCustomer = async () => {
@@ -87,12 +75,13 @@ const LoginScreen = props => {
               createdAt: Date.now(),
               isActive: true,
             }
-            await setDoc(doc(db, 'user', userCredential.user.uid), body)
+            await addDoc(collection(db, 'user'), body)
             console.log('added to database')
             CommonStore.update(s => {
               s.userID = userCredential.user.uid;
-              s.userSelected = body;
+              //s.userSelected = body;
            });
+           setTempUserID(userCredential.user.uid)
          } catch (error) {
            alert(error)
          }
@@ -123,12 +112,13 @@ const LoginScreen = props => {
               createdAt: Date.now(),
               isActive: true,
             }
-            await setDoc(doc(db, 'user', userCredential.user.uid), body)
+            await addDoc(collection(db, 'user'), body)
             console.log('added to database')
             CommonStore.update(s => {
               s.userID = userCredential.user.uid;
-              s.userSelected = body;
+              //s.userSelected = body;
            });
+           setTempUserID(userCredential.user.uid)
          } catch (error) {
            alert(error)
          }
@@ -169,16 +159,12 @@ const LoginScreen = props => {
           <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.black, paddingVertical: 5, marginLeft: 10 }}>Password</Text>
         </View>
         <TextInput
+          secureTextEntry={true}
           style={[styles.textInput]}
           placeholder="Password"
           value={userPassword}
           onChangeText={text => setUserPassword(text)}
         />
-        <View style={{ alignItems: 'flex-end' }}>
-          <TouchableOpacity style={{ paddingVertical: 20 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: Colors.black }}>Forget Password?</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       <View style={{ paddingVertical: 20 }}>
@@ -246,6 +232,7 @@ const LoginScreen = props => {
           <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.black, paddingVertical: 5, marginLeft: 10 }}>Password</Text>
         </View>
         <TextInput
+          secureTextEntry={true}
           style={[styles.textInput]}
           placeholder="Password"
           value={regPassword}
@@ -258,6 +245,7 @@ const LoginScreen = props => {
           <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.black, paddingVertical: 5, marginLeft: 10 }}>Repeat Password</Text>
         </View>
         <TextInput
+          secureTextEntry={true}
           style={[styles.textInput]}
           placeholder="Repeat Password"
           value={regRepeatPassword}

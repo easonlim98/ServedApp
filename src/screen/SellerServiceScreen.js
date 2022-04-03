@@ -21,47 +21,55 @@ import { CommonStore } from '../../store/CommonStore';
 import moment from 'moment';
 import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
+import Foundation from 'react-native-vector-icons/Foundation';
+import { CollectionFunc } from '../../util/CommonFunc';
 
 const SellerServiceScreen = (props) => {
 
 const { navigation, route } = props;
 
-const [serviceData, setServiceData] = useState([]);
-
-const q = query(collection(db, "service"));
-const getService = onSnapshot(q, (querySnapshot) => {
-  const tempService = [];
-  querySnapshot.forEach((doc) => {
-    tempService.push(doc.data());
-  });
-  setServiceData(tempService);
-});
-
 useEffect(() => {
-
-  getService();
-
-},[]);
+  if(props){
+    CollectionFunc(userID);
+  }
+})
 
 useEffect(()=> {
   
   var tempSellerService = [];
 
-  for(var x = 0; x < serviceData.length; x++){
-    if(userSelected.uniqueID === serviceData[x].sellerID){
-      const service = serviceData[x]
+  for(var x = 0; x < serviceList.length; x++){
+    if(userID === serviceList[x].sellerID){
+      const service = serviceList[x]
       tempSellerService.push(service);
     }
   }
 
   setSellerService(tempSellerService);
   
-},[serviceData, userSelected]);
+},[serviceList, userID]);
+
+const reload = () => {
+
+  var tempSellerService = [];
+
+  for(var x = 0; x < serviceList.length; x++){
+    if(userID === serviceList[x].sellerID){
+      const service = serviceList[x]
+      tempSellerService.push(service);
+    }
+  }
+
+  setSellerService(tempSellerService);
+
+}
 
 const [sellerService, setSellerService] = useState([]);
 
-const userSelected = CommonStore.useState(s => s.userSelected);
+const userID = CommonStore.useState(s => s.userID);
+const serviceList = CommonStore.useState(s => s.serviceList);
 
+useEffect(() => {
 navigation.setOptions({
   headerTitle: () => (
     <View style={{
@@ -78,81 +86,7 @@ navigation.setOptions({
     </View>
   ),
 });
-
-
-const renderServiceList = ( item, index ) => {
-  return(
-    <View style={{ paddingHorizontal: 15, paddingVertical: 5, alignItems: 'center' }}>
-    <TouchableOpacity
-      style={{ 
-        width: Dimensions.get('screen').width * 0.85,
-        height: 130,
-        paddingHorizontal: 15,
-        borderRadius: 20,
-        backgroundColor: Colors.white,
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 1,
-        },
-        shadowOpacity: 0.22,
-        shadowRadius: 2.22,
-        elevation: 3,
-      }}
-      onPress={() => {
-      }}
-    >
-      <View style={{ flex: 3 }}>
-        <View style={{ flex: 1, flexDirection: 'row', paddingTop: 15 }}>
-          <View style={{ flex: 1 }}>
-            <Image
-              style={{
-                borderRadius: 10,
-                width: 80,
-                height: 80,
-              }}
-              source={{uri: item.image}}
-            />
-          </View>
-          <View style={{ flex: 2, paddingLeft: 10, paddingRight: 10 }}>
-            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', width: '70%' }} numberOfLines={1}>{item.name}</Text>
-              <View style={{ paddingVertical: 0, width: '40%' }}>
-              <Text style={{
-                backgroundColor: 
-                item.status === 'completed' ? '#474747' 
-                : item.status === 'pending' ? '#5032CB'
-                : item.status === 'cancelled' ? '#BD1409'
-                : item.status === 'in-progress' ? '#7F8201' : '#FFFFFF',
-                paddingVertical: 2,
-                borderRadius: 10,
-                textAlign: 'center',
-                fontSize: 8,
-                color: Colors.white
-              }}>
-                {item.status}
-              </Text>
-              </View>
-            </View>
-            <View style={{ flex: 3, paddingTop: 5 }}>
-              <Text style={{ fontSize: 12, fontWeight: '600' }}>Description:</Text>
-              <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.description}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      <View style={{ flex: 0.8, paddingTop: 0, paddingLeft: 5  }}>
-        <Text style={{ 
-          fontSize: 13,
-          }}>
-            Order Date/Time: {item.orderAt}
-        </Text>
-      </View>
-    </TouchableOpacity>
-    </View>
-  );
-};
+});
 
 return (
 
@@ -169,8 +103,12 @@ return (
         </TouchableOpacity>
     </View>
     </View>
-    <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
+
+    <View style={{ paddingHorizontal: 40, paddingVertical: 5, marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {sellerService.length}</Text>
+        <TouchableOpacity onPress={() => { reload(); }}>
+          <Foundation name='refresh' size={30} color={Colors.primaryColor} />
+        </TouchableOpacity>
     </View>
 
     <ScrollView contentContainerStyle={{ justifyContent: 'center', alignItems: 'center'}}>
@@ -211,13 +149,13 @@ return (
                       width: 80,
                       height: 80,
                     }}
-                    source={item.serviceImg}
+                    source={item.serviceImg ? {uri : item.serviceImg} : ''}
                   />
                 </View>
                 <View style={{ flex: 2, paddingLeft: 10, paddingRight: 10 }}>
                   <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: 14, fontWeight: 'bold', width: '75%' }} numberOfLines={1}>{item.serviceName}</Text>
-                    <View style={{ paddingVertical: 0, width: '30%' }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', width: '100%' }} numberOfLines={1}>{item.serviceName ? item.serviceName : ''}</Text>
+                    {/* <View style={{ paddingVertical: 0, width: '30%' }}>
                     <Text style={{
                       backgroundColor: 'red',
                       borderRadius: 10,
@@ -228,11 +166,11 @@ return (
                     }}>
                       REMOVE
                     </Text>
-                    </View>
+                    </View> */}
                   </View>
                   <View style={{ flex: 3, paddingTop: 5 }}>
                     <Text style={{ fontSize: 12, fontWeight: '600' }}>Description:</Text>
-                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.serviceDescription}</Text>
+                    <Text style={{ fontSize: 11 }} numberOfLines={2}>{item.serviceDescription ? item.serviceDescription : ''}</Text>
                   </View>
                 </View>
               </View>
@@ -242,7 +180,7 @@ return (
               <Text style={{ 
                 fontSize: 13,
                 }}>
-                  Created At: {moment(item.createdAt).format('DD/MM/YYYY hh:mm A')}
+                  Created At: {item.createdAt ? moment(item.createdAt).format('DD/MM/YYYY hh:mm A') : ''}
               </Text>
             </View>
           </TouchableOpacity>

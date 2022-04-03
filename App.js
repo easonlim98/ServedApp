@@ -20,7 +20,7 @@ import ProfileScreen from './src/screen/ProfileScreen';
 import SellerServiceScreen from './src/screen/SellerServiceScreen';
 import AddServiceScreen from './src/screen/AddServiceScreen';
 import CustomerOrderScreen from './src/screen/CustomerOrderScreen';
-
+import Preload from './src/screen/Preload';
 
 import { collection, doc, getDoc, getDocs, onSnapshot, where } from "firebase/firestore";
 import { CollectionFunc } from './util/CommonFunc';
@@ -52,6 +52,7 @@ function LoginScreenStack() {
 function HomeScreenStack() {
   return (
     <Stack.Navigator>
+      {/* <Stack.Screen name="Preload" component={Preload} options={{ headerShown: false }}/> */}
       <Stack.Screen name='HomeScreen' component={HomeScreen} options={{ headerShown: false }} />
       <Stack.Screen name='ServiceListScreen' component={ServiceListScreen} options={ headerOption } />
       <Stack.Screen name='ServiceDetailsScreen' component={ServiceDetailsScreen} options={ headerOption } />
@@ -98,20 +99,6 @@ export default function App() {
   },[]);
 
   const auth = getAuth();
-
-  /* const [userData, setUserData] = useState([]);
-
-  const getUsers = async () => {
-    const userRef = collection(db, 'user')
-    const userDoc = await getDocs(userRef)
-    setUserData(userDoc.docs.map((doc) => ({...doc.data()})))
-  };
-
-  useEffect(() => {
-
-    getUsers();
-
-  },[]); */
 
   const isLoggedIn = CommonStore.useState(s => s.isLoggedIn);
 

@@ -21,11 +21,16 @@ import { CommonStore } from '../../store/CommonStore';
 import moment from 'moment';
 import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
+import { CollectionFunc } from '../../util/CommonFunc';
+import Foundation from 'react-native-vector-icons/Foundation';
 
 const OrderListScreen = (props) => {
 
 const { navigation, route } = props;
 
+
+useEffect(() => {
 navigation.setOptions({
   headerLeft: () => (
     <TouchableOpacity style={{
@@ -61,54 +66,57 @@ navigation.setOptions({
     </View>
   ),
 });
+})
 
-const [serviceData, setServiceData] = useState([]);
+const [currCustomerOrder, setCurrCustomerOrder] = useState([]);
 
-const q = query(collection(db, "order"));
-const getOrder = onSnapshot(q, (querySnapshot) => {
-  const tempOrder = [];
-  querySnapshot.forEach((doc) => {
-    tempOrder.push(doc.data());
-  });
-  setCustomerOrder(tempOrder);
-});
+
+useEffect(() => {
+  if(props){
+    CollectionFunc(userID);
+  }
+})
+
 
 useEffect(() => {
 
-  getOrder();
-
-},[]);
-
-const [customerOrder, setCustomerOrder] = useState([]);
-
-useEffect(()=> {
-  
   var tempCustomerOrder = [];
 
   for(var x = 0; x < customerOrder.length; x++){
-    if(userSelected.uniqueID === customerOrder[x].customerID){
-      const orders = customerOrder[x]
-      tempCustomerOrder.push(orders);
+    if(customerOrder[x].customerID === userID){
+      const record = customerOrder[x];
+      tempCustomerOrder.push(record);
     }
   }
 
   setCurrCustomerOrder(tempCustomerOrder);
-  
-},[customerOrder, userSelected]);
 
-const [currCustomerOrder, setCurrCustomerOrder] = useState([]);
+},[customerOrder, userID])
 
-const userSelected = CommonStore.useState(s => s.userSelected);
+const reload = () => {
+  var tempCustomerOrder = [];
 
+  for(var x = 0; x < customerOrder.length; x++){
+    if(customerOrder[x].customerID === userID){
+      const record = customerOrder[x];
+      tempCustomerOrder.push(record);
+    }
+  }
+
+  setCurrCustomerOrder(tempCustomerOrder);
+};
+
+const userID = CommonStore.useState(s => s.userID);
+const customerOrder = CommonStore.useState(s => s.customerOrder);
 
 const renderServiceList = ({ item, index }) => {
 
   return(
     <View style={{ paddingHorizontal: 15, paddingVertical: 5, alignItems: 'center' }}>
-    <TouchableOpacity
+    <View
       style={{ 
         width: Dimensions.get('screen').width * 0.85,
-        height: 130,
+        paddingVertical: 5,
         paddingHorizontal: 15,
         borderRadius: 20,
         backgroundColor: Colors.white,
@@ -120,9 +128,6 @@ const renderServiceList = ({ item, index }) => {
         shadowOpacity: 0.22,
         shadowRadius: 2.22,
         elevation: 3,
-      }}
-      onPress={() => {
-          
       }}
     >
       <View style={{ flex: 3 }}>
@@ -165,14 +170,32 @@ const renderServiceList = ({ item, index }) => {
         </View>
       </View>
 
-      <View style={{ flex: 0.8, paddingTop: 0, paddingLeft: 5  }}>
+      <View style={{ flex: 2, paddingTop: 0, paddingLeft: 5  }}>
         <Text style={{ 
           fontSize: 13,
           }}>
             Order At: {moment(item.createdAt).format('DD/MM/YYYY hh:mm A')}
         </Text>
+        <View style={{ marginTop: 5, backgroundColor: Colors.secondaryColor, alignItems: 'center', borderRadius: 5 }}>
+          <Text style={{ padding: 2, fontWeight: 'bold' }}>Provider: {item.sellerName}</Text>
       </View>
-    </TouchableOpacity>
+      </View>
+      {item.orderType === "SCHEDULE" ?
+      <View style={{ flex: 1, paddingTop: 5, paddingLeft: 5, flexDirection: 'column'  }}>
+        <Text style={{ 
+          fontSize: 13,
+          fontWeight: 'bold'
+          }}>
+            Scheduled At:
+        </Text>
+        <Text style={{ 
+          fontSize: 13,
+          }}>
+            {item.scheduleDate}{'     '}{item.scheduleTime}
+        </Text>
+      </View>
+      : null }
+    </View>
     </View>
   );
 };
@@ -180,7 +203,7 @@ const renderServiceList = ({ item, index }) => {
 return (
 
   <View style={[styles.container]}>
-    <View style={{ paddingVertical: 20 }}>
+    {/* <View style={{ paddingVertical: 20 }}>
     <View
         style={{
             width: 300,
@@ -222,13 +245,16 @@ return (
             //value={}
         />
     </View>
-    </View>
-    <View style={{ paddingHorizontal: 40, paddingVertical: 5 }}>
+    </View> */}
+    <View style={{ paddingHorizontal: 40, paddingVertical: 5, marginTop: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Total Services: {currCustomerOrder.length}</Text>
+        <TouchableOpacity onPress={() => { reload(); }}>
+          <Foundation name='refresh' size={30} color={Colors.primaryColor} />
+        </TouchableOpacity>
     </View>
 
       <FlatList
-        data={currCustomerOrder}
+        data={currCustomerOrder.length > 0 ? currCustomerOrder : null}
         nestedScrollEnabled={true}
         renderItem={renderServiceList}
         keyExtractor={(item, index) => index.toString()}

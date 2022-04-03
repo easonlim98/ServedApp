@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   ScrollView,
@@ -21,32 +21,42 @@ import { ServiceCategory } from '../../store/ServiceCategory';
 import { CollectionFunc } from '../../util/CommonFunc';
 import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 const HomeScreen = props => {
 
 const { navigation, route } = props;
 
-const userSelected = CommonStore.useState(s => s.userSelected);
+const userID = CommonStore.useState(s => s.userID);
+const customerOrder = CommonStore.useState(s => s.customerOrder);
 const serviceList = CommonStore.useState(s => s.serviceList);
 const userDetails = CommonStore.useState(s => s.userDetails);
-const userID = CommonStore.useState(s => s.userID);
 
-const [serviceData, setServiceData] = useState([]);
+const [userSelected, setUserSelected] = useState();
 
-const q = query(collection(db, "service"));
-const getService = onSnapshot(q, (querySnapshot) => {
-  const tempService = [];
-  querySnapshot.forEach((doc) => {
-    tempService.push(doc.data());
-  });
-  setServiceData(tempService);
-});
+useEffect(() => {
+  if(props){
+    CollectionFunc(userID);
+  }
+})
 
 useEffect(() => {
 
-  getService();
+  console.log(customerOrder)
 
-},[]);
+  var selected = {};
+
+  for(var x = 0; x < userDetails.length; x++){
+    if(userDetails[x].uniqueID === userID){
+
+      selected = userDetails[x];
+
+    }
+  }
+
+  setUserSelected(selected);
+
+},[userDetails, userID])
 
 
 const renderCategoryList = ({item, index}) => {
@@ -59,9 +69,9 @@ const renderCategoryList = ({item, index}) => {
       }}
       onPress={() => {
         var tempServiceSelected = [];
-          for(var x = 0; x < serviceData.length; x++){
-            if(item.id === serviceData[x].serviceCategory){
-              const record = serviceData[x];
+          for(var x = 0; x < serviceList.length; x++){
+            if(item.id === serviceList[x].serviceCategory){
+              const record = serviceList[x];
               tempServiceSelected.push(record)
             }
           }
@@ -94,7 +104,7 @@ return (
     />
     </View>
     <View style={{ justifyContent: 'center' }}>
-    <Text style={{ fontSize: 24, fontWeight: '900', color: Colors.black, paddingVertical: 5, }}>Hi {userSelected.userName}</Text>
+    <Text style={{ fontSize: 24, fontWeight: '900', color: Colors.black, paddingVertical: 5, }}>Hi {userSelected ? userSelected.userName : 'User'}</Text>
     <Text style={{ width: '80%', fontSize: 18, fontWeight: '700', color: Colors.black }}>What service are you looking for?</Text>
     </View>
     </View>

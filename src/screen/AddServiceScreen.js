@@ -22,6 +22,8 @@ import { ServiceCategory } from '../../store/ServiceCategory';
 import { collection, addDoc, getDocs, Timestamp, setDoc, doc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
 import { v4 as uuidv4 } from 'uuid'
+import {Picker} from '@react-native-picker/picker';
+
 
 const AddServiceScreen = (props) => {
 
@@ -32,7 +34,7 @@ const userSelected = CommonStore.useState(s => s.userSelected);
 const [serviceName, setServiceName] = useState('');
 const [description, setDescription] = useState('');
 const [price, setPrice] = useState(0);
-const [estimateHour, setEstimateHour] = useState(0);
+const [estimateHour, setEstimateHour] = useState('');
 const [category, setCategory] = useState('');
 
 
@@ -45,49 +47,66 @@ const [categoryList, setCategoryList] = useState(
   ))
 );
 
-navigation.setOptions({
-  headerTitle: () => (
-    <View style={{
-      justifyContent: 'center',
-    }}>
-      <Text
-        style={{
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: Colors.black,
+useEffect(() => {
+
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={{
+          justifyContent: 'center',
         }}>
-        Add Service
-      </Text>
-    </View>
-  ),
-});
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              color: Colors.black,
+            }}>
+            Add Service
+          </Text>
+        </View>
+      ),
+    });
+
+},[]);
 
 const createServiceFunc = async () => {
 
-      var body = {
-          uniqueID: uuidv4(),
-          serviceImg: 'https://thumbs.dreamstime.com/b/repair-service-concept-d-illustration-isolated-white-background-142416211.jpg',
-          serviceName: serviceName,
-          serviceDescription: description,
-          servicePrice: price,
-          estimateHour: estimateHour,
-          createdAt: Date.now(),
-          isActive: true,
-          sellerID: userSelected.uniqueID,
-          serviceCategory: category,
-      }
+  if(serviceName !== '' && description !== '' && price !== 0 && estimateHour !== '' && category !== ''){
 
-     await setDoc(doc(db, 'service', body.uniqueID), body).then(() => {
-        navigation.navigate('SellerServiceScreen');
-        
-        console.log(body)
-      })
+  var userName = []
 
-      
-      
+  for(var i = 0 ; i < userDetails.length; i++){
+    if(userDetails[i].uniqueID === userID){
+      const record = userDetails[i]
+      userName.push(record)
+    }
   }
 
+  var body = {
+    uniqueID: uuidv4(),
+    serviceImg: 'https://thumbs.dreamstime.com/b/repair-service-concept-d-illustration-isolated-white-background-142416211.jpg',
+    serviceName: serviceName,
+    serviceDescription: description,
+    servicePrice: price,
+    estimateHour: estimateHour,
+    createdAt: Date.now(),
+    isActive: true,
+    sellerID: userID,
+    sellerName: userName[0].userName,
+    serviceCategory: category,
+  }
 
+  await addDoc(collection(db, 'service'), body);
+  console.log(body)
+  navigation.navigate('HomeScreen')
+  }
+  else{
+    Alert.alert("All field are required")
+  }
+
+}
+
+const userID = CommonStore.useState(s => s.userID);
+const userDetails = CommonStore.useState(s => s.userDetails);
 
 return (
 
@@ -118,12 +137,32 @@ return (
             <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', paddingBottom: 5, }}>Category :</Text>
               
-              <TextInput
-                style={[styles.textInput]}
-                placeholder="Enter Category name..."
-                value={category}
-                onChangeText={text => setCategory(text)}
-              />
+              <Picker
+                style={{
+                  borderRadius: 10,
+                  width: '100%',
+                  height: 35,
+                  backgroundColor: Colors.white,
+                  shadowColor: Colors.black,
+                  shadowOffset: {
+                    width: 0,
+                    height: 4,
+                  },
+                  shadowOpacity: 1,
+                  shadowRadius: 10,
+                  elevation: 3,
+                  paddingLeft: 10
+                }}
+                selectedValue={category}
+                onValueChange={(itemValue, itemIndex) =>
+                  setCategory(itemValue)
+                }>
+                { ServiceCategory.map((item) => {
+                  return (
+                    <Picker.Item label={item.name} value={item.id} />
+                  )
+                })} 
+              </Picker>
 
               </View>
           </View>

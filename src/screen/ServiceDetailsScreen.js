@@ -22,12 +22,18 @@ import Fontisto from 'react-native-vector-icons/Fontisto';
 import AntDesign from 'react-native-vector-icons/AntDesign'
 import { CommonStore } from '../../store/CommonStore'
 import { v4 as uuidv4 } from 'uuid'
-import { collection, addDoc, getDocs, Timestamp, setDoc, doc } from 'firebase/firestore'
+import { collection, addDoc, getDocs, Timestamp, setDoc, doc, updateDoc } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import moment from 'moment';
+import Foundation from 'react-native-vector-icons/Foundation'
 
 const ServiceDetailsScreen = props => {
 
 const { navigation, route } = props;
+
+useEffect(() => {
+
 navigation.setOptions({
   headerTitle: () => (
     <View style={{
@@ -45,8 +51,7 @@ navigation.setOptions({
   ),
 });
 
-const serviceSelected = CommonStore.useState(s => s.serviceSelected);
-const userSelected = CommonStore.useState(s => s.userSelected);
+});
 
 const [showConfirmationUrg, setShowConfirmationUrg] = useState(false);
 const [showConfirmationSch, setShowConfirmationSch] = useState(false);
@@ -64,52 +69,180 @@ const [serviceDetails, setServiceDetails] = useState(
 );
 
 const createUrgentOrder = async () => {
+
+  if(currProfile[0].walletAmount >= serviceSelected.servicePrice){
+
     var body = {
       uniqueID: uuidv4(),
       createdAt: Date.now(),
       orderType: 'URGENT',
       serviceID: serviceSelected.uniqueID,
-      customerID: userSelected.uniqueID,
+      customerID: userID,
       status: 'pending',
       totalPrice: serviceSelected.servicePrice,
       estimateHour: serviceSelected.estimateHour,
       serviceImg: serviceSelected.serviceImg,
       serviceDescription: serviceSelected.serviceDescription,
       serviceName: serviceSelected.serviceName,
-      sellerID: serviceSelected.sellerID
+      sellerID: serviceSelected.sellerID,
+      sellerName: serviceSelected.sellerName,
     }
-    await setDoc(doc(db, 'order', body.uniqueID), body);
+    await addDoc(collection(db, 'order'), body);
     console.log(body)
-    Alert.alert('Successfully Ordered')
-      setShowConfirmationUrg(false);
+    setShowConfirmationUrg(false);
       navigation.navigate('HomeScreen');
+
+    const userRef = doc(db, 'user', currProfile[0].docID);
+    await updateDoc(userRef, {
+      walletAmount: currProfile[0].walletAmount - serviceSelected.servicePrice
+    })
+
+    var bodyTrans = {
+      amount: serviceSelected.servicePrice,
+      userID: userID,
+      serviceName: serviceSelected.serviceName,
+      createdAt: Date.now()
+    }
+  
+    await addDoc(collection(db, 'transaction'), bodyTrans);
+    console.log(bodyTrans)
+
+  }
+  else {
+    Alert.alert("Insufficient balance, Please Reload")
+  }
 }
 
 const createScheduleOrder = async () => {
+
+  if(currProfile[0].walletAmount >= serviceSelected.servicePrice){
+  if(scheduleDate !== "" && scheduleTime !== ""){
   var body = {
     uniqueID: uuidv4(),
     createdAt: Date.now(),
     orderType: 'SCHEDULE',
     serviceID: serviceSelected.uniqueID,
-    customerID: userSelected.uniqueID,
+    customerID: userID,
     status: 'pending',
     totalPrice: serviceSelected.servicePrice,
     estimateHour: serviceSelected.estimateHour,
     serviceImg: serviceSelected.serviceImg,
     serviceDescription: serviceSelected.serviceDescription,
     serviceName: serviceSelected.serviceName,
-    sellerID: serviceSelected.sellerID
+    sellerID: serviceSelected.sellerID,
+    sellerName: serviceSelected.sellerName,
+    scheduleDate: scheduleDate,
+    scheduleTime: scheduleTime
   }
-  await setDoc(doc(db, 'order', body.uniqueID), body);
+  await addDoc(collection(db, 'order'), body);
   console.log(body)
-  Alert.alert('Successfully Ordered')
     setShowConfirmationSch(false);
     navigation.navigate('HomeScreen');
+
+    
+
+    const userRef = doc(db, 'user', currProfile[0].docID);
+    await updateDoc(userRef, {
+      walletAmount: currProfile[0].walletAmount - serviceSelected.servicePrice
+    })
+
+    var bodyTrans = {
+      amount: serviceSelected.servicePrice,
+      userID: userID,
+      serviceName: serviceSelected.serviceName,
+      createdAt: Date.now()
+    }
+  
+    await addDoc(collection(db, 'transaction'), bodyTrans);
+    console.log(bodyTrans)
+
+  }
+  else{
+    Alert.alert("Please select Date/Time")
+  }
+  }
+  else {
+    Alert.alert("Insufficient balance, Please Reload")
+  }
 }
+
+useEffect(() => {
+
+  var selected = [];
+
+  for(var x = 0; x < userDetails.length; x++){
+    if(userDetails[x].uniqueID === userID){
+      const record = userDetails[x];
+      selected.push(record)
+
+    }
+  }
+
+  setCurrProfile(selected);
+
+},[userDetails, userID])
+
+const reload = () => {
+
+  var selected = [];
+
+  for(var x = 0; x < userDetails.length; x++){
+    if(userDetails[x].uniqueID === userID){
+      const record = userDetails[x];
+      selected.push(record)
+
+    }
+  }
+
+  setCurrProfile(selected);
+
+}
+
+const serviceSelected = CommonStore.useState(s => s.serviceSelected);
+const userID = CommonStore.useState(s => s.userID);
+
+const [currProfile, setCurrProfile] = useState([]);
+
+const userDetails = CommonStore.useState(s => s.userDetails);
+
+const [datePickerVisible, setDatePickerVisible] = useState(false);
+const [timePickerVisible, setTimePickerVisible] = useState(false);
+
+const [scheduleDate, setScheduleDate] = useState('');
+const [scheduleTime, setScheduleTime] = useState('');
+
+const hideDatePicker = () => {
+  setDatePickerVisible(false);
+};
+
+const hideTimePicker = () => {
+  setTimePickerVisible(false);
+};
 
 return (
 
   <ScrollView style={[styles.container]}>
+
+      <DateTimePickerModal
+        isVisible={datePickerVisible}
+        mode="date"
+        onConfirm={(date) => { 
+          setScheduleDate(date.toDateString()); 
+          console.log(date.toLocaleDateString())
+          setDatePickerVisible(false)}}
+        onCancel={hideDatePicker}
+      />
+
+      <DateTimePickerModal
+        isVisible={timePickerVisible}
+        mode="time"
+        onConfirm={(time) => { 
+          setScheduleTime(time.toLocaleTimeString()); 
+          console.log(time.toLocaleTimeString())
+          setTimePickerVisible(false)}}
+        onCancel={hideTimePicker}
+      />
+
     <Modal
       visible={showConfirmationUrg}
       transparent={true}
@@ -120,9 +253,14 @@ return (
           <View>
           <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.white }}>Are you sure to purchase this service ?</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 10, }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10, width: '60%'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Fontisto name={'wallet'} size={20} color={Colors.primaryColor}/>
-              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}>RM {userSelected.walletAmount}</Text>
+              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}>RM {currProfile.length !== 0 ? currProfile[0].walletAmount: '0'}</Text>
+            </View>
+            <TouchableOpacity onPress={() => { reload(); }}>
+              <Foundation name='refresh' size={25} color={Colors.primaryColor} />
+            </TouchableOpacity>
           </View>
           <View style={{ flexDirection: 'row', width: '75%',justifyContent: 'space-between', paddingTop: 20 }}>
             <TouchableOpacity style={{ 
@@ -167,9 +305,14 @@ return (
           <View>
           <Text style={{ fontSize: 16, fontWeight: 'bold', color: Colors.white }}>Are you sure to purchase this service ?</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingTop: 10, }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingTop: 10, width: '60%'}}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Fontisto name={'wallet'} size={20} color={Colors.primaryColor}/>
-              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}>RM {userSelected.walletAmount}</Text>
+              <Text style={{ paddingLeft: 12, fontSize: 16, fontWeight: 'bold', color: Colors.white }}>RM {currProfile.length !== 0 ? currProfile[0].walletAmount: '0'}</Text>
+            </View>
+            <TouchableOpacity onPress={() => { reload(); }}>
+              <Foundation name='refresh' size={25} color={Colors.primaryColor} />
+            </TouchableOpacity>
           </View>
           <View style={{ flexDirection: 'row', width: '75%',justifyContent: 'space-between', paddingTop: 20 }}>
             <TouchableOpacity style={{ 
@@ -274,18 +417,20 @@ return (
           <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'right' }}>Date</Text>
         </View>
         <View style={{ flex: 2, paddingLeft: 10 }}>
-        <TouchableOpacity style={{
-            width: 150,
-            backgroundColor: '#C6EB5F',
-            paddingVertical: 5,
-            borderRadius: 5,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingHorizontal: 15
+        <TouchableOpacity 
+            onPress={() => { setDatePickerVisible(true) }}
+            style={{
+                width: 150,
+                backgroundColor: '#C6EB5F',
+                paddingVertical: 5,
+                borderRadius: 5,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingHorizontal: 15
         }}>
           <AntDesign name={'calendar'} size={20}/>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>12 Aug 2021</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{scheduleDate ? moment(scheduleDate).format('DD-MM-YYYY') : 'Choose Date'}</Text>
         </TouchableOpacity>
         </View>
       </View>
@@ -294,18 +439,20 @@ return (
           <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'right' }}>Time</Text>
         </View>
         <View style={{ flex: 2, paddingLeft: 10 }}>
-        <TouchableOpacity style={{
-            width: 150,
-            backgroundColor: '#C6EB5F',
-            paddingVertical: 5,
-            borderRadius: 5,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingHorizontal: 15
+        <TouchableOpacity 
+          onPress={() => { setTimePickerVisible(true) }}
+          style={{
+              width: 150,
+              backgroundColor: '#C6EB5F',
+              paddingVertical: 5,
+              borderRadius: 5,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingHorizontal: 15
         }}>
           <AntDesign name={'clockcircleo'} size={20}/>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>12:30 PM</Text>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', textAlign: 'center' }}>{scheduleTime ? scheduleTime : 'Choose Time'}</Text>
         </TouchableOpacity>
         </View>
       </View>
