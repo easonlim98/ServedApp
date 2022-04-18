@@ -68,7 +68,7 @@ useEffect(() => {
 
 },[]);
 
-const createServiceFunc = async () => {
+const createServiceFunc = () => {
 
   if(serviceName !== '' && description !== '' && price !== 0 && estimateHour !== '' && category !== ''){
 
