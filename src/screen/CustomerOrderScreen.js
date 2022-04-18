@@ -18,7 +18,7 @@ import {
 import Colors from "../constant/Colors";
 import Feather from 'react-native-vector-icons/Feather';
 import Foundation from 'react-native-vector-icons/Foundation';
-import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, onSnapshot, query, addDoc, where, getDocs, Timestamp, setDoc, doc, updateDoc, increment } from 'firebase/firestore'
 import db from '../../constants/firebaseConfig';
 import { CommonStore } from '../../store/CommonStore';
 import { CollectionFunc } from '../../util/CommonFunc';
@@ -85,21 +85,49 @@ const reload = () => {
 };
 
 const updateStatus = async (item) => {
+
+  var tempUser = [];
+
+  for(var i = 0; i < userDetails.length; i++){
+    if(userDetails[i].uniqueID === refundTarget){
+      const record = userDetails[i]
+      tempUser.push(record)
+    }
+  }
+
+  if(newStatus !== 'cancelled'){
+  const orderRef = doc(db, 'order', docID);
+  await updateDoc(orderRef, {
+    status: newStatus
+  })}
+  else if(newStatus === 'cancelled'){
+
   const orderRef = doc(db, 'order', docID);
   await updateDoc(orderRef, {
     status: newStatus
   })
 
+  const userRef = doc(db, 'user', tempUser[0].docID);
+  await updateDoc(userRef, {
+    walletAmount: increment(parseInt(refundAmount))
+  })
+  console.log(refundAmount)
+  }
+
   setShowStatusModal(false);
+  
 
 };
 
 const userID = CommonStore.useState(s => s.userID);
 const customerOrder = CommonStore.useState(s => s.customerOrder);
+const userDetails = CommonStore.useState(s => s.userDetails);
 
 const [statusModal, setShowStatusModal] = useState(false);
 const [newStatus, setNewStatus] = useState('');
 const [docID, setDocID] = useState('');
+const [refundTarget, setRefundTarget] = useState('');
+const [refundAmount, setRefundAmount] = useState('');
 const [currCustomerOrder, setCurrCustomerOrder] = useState([]);
 
 return (
@@ -165,6 +193,8 @@ return (
                   }}
                     onPress={() => {
                       updateStatus();
+                      setRefundAmount(item.totalPrice);
+                      setRefundTarget(item.customerID);
                     }}
                   >
                     <Text style={{ fontSize: 14, color: Colors.black, fontWeight: 'bold' }}>CONFIRM</Text>
@@ -189,6 +219,7 @@ return (
           </Modal>
           <View style={{ paddingHorizontal: 15, paddingVertical: 5, alignItems: 'center' }}>
           <TouchableOpacity
+            disabled={item.status === 'cancelled' ? true : false}
             style={{
               width: Dimensions.get('screen').width * 0.85,
               paddingVertical: 5,
